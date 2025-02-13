@@ -43,6 +43,8 @@ fastapi-book-project/
 - Pydantic
 - pytest
 - uvicorn
+- ngrok
+- nginx
 
 ## Installation
 
@@ -128,6 +130,116 @@ The API includes proper error handling for:
 - Invalid book IDs
 - Invalid genre types
 - Malformed requests
+
+Here are concrete examples for each section of the updated **README.md**:
+
+---
+
+### **1. Triggering the CI Pipeline**
+#### Example: Running Tests on a Pull Request  
+
+When you create a **pull request (PR)** to the `main` branch, the `test.yml` workflow will run automatically.
+
+✅ **Example: Creating a PR**
+```sh
+git checkout -b feature/update-books-api
+git add .
+git commit -m "Added book retrieval endpoint"
+git push origin feature/update-books-api
+```
+Then, create a **pull request** on GitHub.
+
+**Expected Output on GitHub Actions:**
+```
+✅ Running pytest...
+✅ All tests passed!
+✅ CI workflow completed successfully.
+```
+
+---
+
+### **2. Automatic Deployment (CD Pipeline)**
+#### Example: Merging to `main`  
+Once a PR is merged, `deploy.yml` will trigger the deployment.
+
+✅ **Example: Merging to `main`**
+```sh
+git checkout main
+git merge feature/update-books-api
+git push origin main
+```
+
+**Expected Output on GitHub Actions:**
+```
+✅ Checking out repository...
+✅ Pulling latest changes...
+✅ Restarting FastAPI server...
+✅ Ngrok is running at: https://randomsubdomain.ngrok.io
+```
+
+---
+
+### **3. Manually Starting Ngrok**
+If you want to start Ngrok manually:
+
+✅ **Example:**
+```sh
+ngrok authtoken 2EXAMPLE_AUTH_TOKEN
+ngrok http 8000
+```
+
+**Expected Output:**
+```
+Session Status                online
+Account                        user@example.com (Plan: Free)
+Forwarding                    https://randomsubdomain.ngrok.io -> http://localhost:8000
+```
+Now your API is live at `https://randomsubdomain.ngrok.io/api/v1/books/{book_id}`.
+
+---
+
+### **4. API Endpoint Examples**
+#### Example: Retrieve a Book by ID
+
+✅ **Request:**
+```sh
+curl -X GET https://randomsubdomain.ngrok.io/api/v1/books/1
+```
+
+✅ **Response (200 OK):**
+```json
+{
+  "id": 1,
+  "title": "The Pragmatic Programmer",
+  "author": "Andrew Hunt, David Thomas",
+  "year": 1999
+}
+```
+
+❌ **Response (404 Not Found - Invalid ID):**
+```json
+{
+  "detail": "Book not found"
+}
+```
+
+---
+
+### **5. Verifying Nginx Configuration**
+If you edited `nginx.conf` and need to check if it works:
+
+✅ **Example:**
+```sh
+nginx -t
+```
+**Expected Output:**
+```
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+```
+If you see an error, fix the configuration before restarting Nginx.
+
+---
+
 
 ## Contributing
 
