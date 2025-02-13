@@ -131,9 +131,6 @@ The API includes proper error handling for:
 - Invalid genre types
 - Malformed requests
 
-Here are concrete examples for each section of the updated **README.md**:
-
----
 
 ### **1. Triggering the CI Pipeline**
 #### Example: Running Tests on a Pull Request  
