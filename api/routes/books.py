@@ -41,6 +41,12 @@ async def create_book(book: Book):
     )
 
 
+@router.get("/", response_model=list[Book], status_code=status.HTTP_200_OK)
+async def get_all_books():
+    return list(db.books.values())  # Convert dictionary values to a list
+
+
+
 @router.get("/{book_id}", response_model=Book, status_code=status.HTTP_200_OK)
 async def get_book(book_id: int) -> Book:
     book = db.get_book(book_id)  # Retrieve a specific book by ID
