@@ -43,8 +43,8 @@ fastapi-book-project/
 - Pydantic
 - pytest
 - uvicorn
-- ngrok
-- nginx
+- AWS
+- Nginx
 
 ## Installation
 
@@ -73,13 +73,13 @@ pip install -r requirements.txt
 1. Start the server:
 
 ```bash
-uvicorn main:app
+uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
 2. Access the API documentation:
 
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+- Swagger UI: `http://<AWS_PUBLIC_IP>:8000/docs`
+- ReDoc: `http://<AWS_PUBLIC_IP>:8000/redoc`
 
 ## API Endpoints
 
@@ -131,76 +131,71 @@ The API includes proper error handling for:
 - Invalid genre types
 - Malformed requests
 
+---
 
-### **1. Triggering the CI Pipeline**
-#### Example: Running Tests on a Pull Request  
+## **AWS Deployment Guide**
 
-When you create a **pull request (PR)** to the `main` branch, the `test.yml` workflow will run automatically.
+### **1. Deploying to AWS EC2**
 
-✅ **Example: Creating a PR**
+1. **SSH into your AWS instance**
 ```sh
-git checkout -b feature/update-books-api
-git add .
-git commit -m "Added book retrieval endpoint"
-git push origin feature/update-books-api
+ssh -i your-key.pem ec2-user@<AWS_PUBLIC_IP>
 ```
-Then, create a **pull request** on GitHub.
 
-**Expected Output on GitHub Actions:**
+2. **Install dependencies on AWS**
+```sh
+sudo yum update -y
+sudo yum install python3-pip -y
+pip3 install -r requirements.txt
 ```
-✅ Running pytest...
-✅ All tests passed!
-✅ CI workflow completed successfully.
+
+3. **Run FastAPI server**
+```sh
+uvicorn main:app --host 0.0.0.0 --port 8000
 ```
+
+### **2. Setting Up Nginx as a Reverse Proxy**
+
+1. **Install Nginx**
+```sh
+sudo yum install nginx -y
+sudo systemctl start nginx
+sudo systemctl enable nginx
+```
+
+2. **Edit the Nginx Configuration**
+```sh
+sudo nano /etc/nginx/nginx.conf
+```
+Replace the existing `server` block with:
+```nginx
+server {
+    listen 80;
+    server_name <AWS_PUBLIC_IP>;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+Save and exit, then restart Nginx:
+```sh
+sudo systemctl restart nginx
+```
+
+Now, access the API using `http://<AWS_PUBLIC_IP>/api/v1/books`.
 
 ---
 
-### **2. Automatic Deployment (CD Pipeline)**
-#### Example: Merging to `main`  
-Once a PR is merged, `deploy.yml` will trigger the deployment.
-
-✅ **Example: Merging to `main`**
-```sh
-git checkout main
-git merge feature/update-books-api
-git push origin main
-```
-
-**Expected Output on GitHub Actions:**
-```
-✅ Checking out repository...
-✅ Pulling latest changes...
-✅ Restarting FastAPI server...
-✅ Ngrok is running at: https://randomsubdomain.ngrok.io
-```
-
----
-
-### **3. Manually Starting Ngrok**
-If you want to start Ngrok manually:
-
-✅ **Example:**
-```sh
-ngrok authtoken 2EXAMPLE_AUTH_TOKEN
-ngrok http 8000
-```
-
-**Expected Output:**
-```
-Session Status                online
-Account                        user@example.com (Plan: Free)
-Forwarding                    https://randomsubdomain.ngrok.io -> http://localhost:8000
-```
-Now your API is live at `https://randomsubdomain.ngrok.io/api/v1/books/{book_id}`.
-
----
-
-### **4. API Endpoint Examples**
+### **3. API Endpoint Examples**
 #### Example: Retrieve a Book by ID
 
 ✅ **Request:**
 ```sh
-curl -X GET https://randomsubdomain.ngrok.io/api/v1/books/1
+curl -X GET http://<AWS_PUBLIC_IP>/api/v1/books/1
 ```
 
 ✅ **Response (200 OK):**
@@ -222,22 +217,6 @@ curl -X GET https://randomsubdomain.ngrok.io/api/v1/books/1
 
 ---
 
-### **5. Verifying Nginx Configuration**
-If you edited `nginx.conf` and need to check if it works:
-
-✅ **Example:**
-```sh
-nginx -t
-```
-**Expected Output:**
-```
-nginx: configuration file /etc/nginx/nginx.conf test is successful
-```
-If you see an error, fix the configuration before restarting Nginx.
-
----
-
-
 ## Contributing
 
 1. Fork the repository
@@ -253,3 +232,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Support
 
 For support, please open an issue in the GitHub repository.
+
